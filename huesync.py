@@ -38,22 +38,22 @@ class DatabaseEntry:
         self.value = value
         self.path = path
 
-    async def get(self, websocket):
+    def get_value(self):
+        """Get the value of this entry
+        """
+        return self.value
+
+    async def handle_get(self, websocket):
         """Handle a get request from a connected client
-        To get the value from within the python context, 
-        simply use self.value instead
         Parameters
         ----------
         websocket : websocket
             The client that made the request
         """
-        await websocket.send(build_request("SET",self.path,self.value))
+        await websocket.send(build_request("SET",self.path,self.get_value()))
 
-    async def set(self, value):
-        """Handle a set request from a connected client
-        Also use this function when setting the value from within
-        the python context, so the changes will propagate to 
-        the clients
+    async def set_value(self, value):
+        """Set the value of this entry
         Parameters
         ----------
         value : anything
@@ -62,6 +62,17 @@ class DatabaseEntry:
         self.value = value
         for websocket in self.subscribers:
             await websocket.send(build_request("SET",self.path,self.value))
+        return self.value
+
+    async def handle_set(self, value):
+        """Handle a set request from a connected client
+        Parameters
+        ----------
+        value : anything
+            value to be set
+        """
+        await self.set_value(value)
+        
 
     def subscribe(self, websocket):
         """Subscribe a client to changes in this entry
@@ -70,6 +81,7 @@ class DatabaseEntry:
         websocket : websocket
             The client that made the request
         """
+        players_subscriptions[websocket].add(self)
         self.subscribers.add(websocket)
     
     def unsubscribe(self, websocket): 
@@ -79,6 +91,8 @@ class DatabaseEntry:
         websocket : websocket
             The client that made the request
         """
+        if self in players_subscriptions[websocket]:
+            players_subscriptions[websocket].remove(self)
         self.subscribers.remove(websocket)
 
 def create_entry(path,value,entry_type=DatabaseEntry):
@@ -156,7 +170,7 @@ def register(websocket):
     websocket : websocket
         The client that connected
     """
-    players_subscriptions[websocket] = {}
+    players_subscriptions[websocket] = set()
 
 def unregister(websocket):
     """Unregister a client from the backend
@@ -165,8 +179,8 @@ def unregister(websocket):
     websocket : websocket
         The client that disconnected
     """
-    for subscription in players_subscriptions[websocket]:
-        subscription.unsubscribe()
+    for subscription in players_subscriptions[websocket].copy():
+        subscription.unsubscribe(websocket)
     del players_subscriptions[websocket]
 
 async def handle_request(websocket, message):
@@ -180,14 +194,12 @@ async def handle_request(websocket, message):
     """
     rtype, path, payload = parse_request(message)
     if rtype == "GET":
-        await websocket.send(build_request("SET",path,
-            traverse_database(path=path).value))
+        await traverse_database(path=path).handle_get(websocket)
     if rtype == "SUB":
         traverse_database(path=path).subscribe(websocket)
-        await websocket.send(build_request("SET",path,
-            traverse_database(path=path).value))
+        await traverse_database(path=path).handle_get(websocket)
     if rtype == "SET":
-        await traverse_database(path=path).set(payload)
+        await traverse_database(path=path).handle_set(payload)
 
 async def server(websocket, path):
     register(websocket)

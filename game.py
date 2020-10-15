@@ -21,7 +21,7 @@ def on_draw():
 
 def on_update(dt):
     desheading = int(huesync.traverse_database("ship/desired_heading")
-        .value) - 90
+        .get_value()) - 90
     print(desheading)
     ship.rotation += (desheading - ship.rotation)/10
 
