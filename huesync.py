@@ -107,15 +107,9 @@ def create_entry(path,value,entry_type=DatabaseEntry):
     entry_type : type
         type of the entry (example : DatabaseEntry)
     """
-    path_segments = path.split("/")
-    current = database
-    for segment in path_segments[:-1]:
-        if segment not in database:
-            current[segment] = {}
-        current = current[segment]
-    current[path_segments[-1]] = entry_type(value,path)
+    database[path] = entry_type(value,path)
 
-def traverse_database(path="",path_segments=[], current=database):
+def get_entry(path):
     """Look for the entry of a given path
     Parameters
     ----------
@@ -125,13 +119,8 @@ def traverse_database(path="",path_segments=[], current=database):
     -------
     DatabaseEntry : The entry that was found
     """
-    if path != "":
-        return traverse_database(path_segments=path.split("/"))
-    if path_segments == []:
-        return current
-    else:
-        return traverse_database(current = current[path_segments[0]],
-            path_segments=path_segments[1:])
+    if path != "" and path in current:
+        return current[path]
 
 def build_request(rtype, path, payload):
     """Build a huesync request
