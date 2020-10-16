@@ -39,7 +39,7 @@ class Ship(pyglet.sprite.Sprite):
         super().__init__(ship_img, x=x, y=y)
     
     def update(self,dt):
-        desheading = int(huesync.traverse_database("ship/desired_heading")
+        desheading = int(huesync.get_entry("ship/desired_heading")
             .get_value()) - 90
         self.rotation += (desheading - self.rotation)/10
 

@@ -119,8 +119,8 @@ def get_entry(path):
     -------
     DatabaseEntry : The entry that was found
     """
-    if path != "" and path in current:
-        return current[path]
+    if path != "" and path in database:
+        return database[path]
 
 def build_request(rtype, path, payload):
     """Build a huesync request
@@ -183,12 +183,12 @@ async def handle_request(websocket, message):
     """
     rtype, path, payload = parse_request(message)
     if rtype == "GET":
-        await traverse_database(path=path).handle_get(websocket)
+        await get_entry(path=path).handle_get(websocket)
     if rtype == "SUB":
-        traverse_database(path=path).subscribe(websocket)
-        await traverse_database(path=path).handle_get(websocket)
+        get_entry(path=path).subscribe(websocket)
+        await get_entry(path=path).handle_get(websocket)
     if rtype == "SET":
-        await traverse_database(path=path).handle_set(payload)
+        await get_entry(path=path).handle_set(payload)
 
 async def server(websocket, path):
     register(websocket)
