@@ -1,224 +1,191 @@
-"""Module that implements a datastructure
-that is automatically synchronized to clients using websockets
+"""
+    Bootleg version of Huesync by: mkualquiera
+    written by: nexustix
 """
 
-import threading
-import asyncio
 import websockets
+import asyncio
+import threading
 import json
 
-players_subscriptions = {}
+def build_request(rtype, path, payload):
+    """Turn arguments into websocket request
 
-database = {}
+    Args:
+        rtype (str): response type
+        path (str): path
+        payload (str): payload
+    """
+    request_obj = {"type":rtype, "path":path, "payload":payload}
+    return json.dumps(request_obj)
+
+def parse_request(request):
+    """Split websocket request into relevant elements
+
+    Args:
+        websocket (Websocket): the websocket
+
+    Returns:
+        (str): response type
+        (str): path
+        (str): payload
+    """
+    request_obj = json.loads(request)
+    return (request_obj['type'], request_obj['path'], request_obj['payload'])
 
 class DatabaseEntry:
-    """Base database entry.
-    Automatically propagates changes to all clients.
 
-    Attributes
-    ----------
-    subscribers : set(websocket)
-        clients that are subscribed to this entry and 
-        will be notified of changes in value.
-    value : anything
-        the value of the entry
-    path : string
-        the path of this entry within the database
-    """
     def __init__(self,value,path):
-        """
-        Parameters
-        ----------
-        value : anything
-            initial value of the entry
-        path : string
-            the path of this entry within the database
-        """
         self.subscribers = set()
         self.value = value
         self.path = path
 
     def get_value(self):
-        """Get the value of this entry
+        """Get contained value
+
+        Returns:
+            (any): contained value
         """
         return self.value
 
-    async def handle_get(self, websocket):
-        """Handle a get request from a connected client
-        Parameters
-        ----------
-        websocket : websocket
-            The client that made the request
-        """
-        await websocket.send(build_request("SET",self.path,self.get_value()))
-
     async def set_value(self, value):
-        """Set the value of this entry
-        Parameters
-        ----------
-        value : anything
-            value to be set
+        """Set contained value
+
+        Args:
+            (any): value to be contained
         """
         self.value = value
         for websocket in self.subscribers:
             await websocket.send(build_request("SET",self.path,self.value))
         return self.value
 
+    async def handle_get(self, websocket):
+        """Handle websocket get request
+
+        Args:
+            websocket (Websocket): the websocket
+        """
+        await websocket.send(build_request("SET",self.path,self.get_value()))
+
     async def handle_set(self, value):
-        """Handle a set request from a connected client
-        Parameters
-        ----------
-        value : anything
-            value to be set
+        """Handle websocket set request
+
+        Args:
+            value (any): value to set
         """
         await self.set_value(value)
-        
 
-    def subscribe(self, websocket):
-        """Subscribe a client to changes in this entry
-        Parameters
-        ----------
-        websocket : websocket
-            The client that made the request
+    def add_subscription(self, websocket):
+        """Add subscriver to entry
+
+        Args:
+            websocket (Websocket): new subscriber
         """
-        players_subscriptions[websocket].add(self)
         self.subscribers.add(websocket)
-    
-    def unsubscribe(self, websocket): 
-        """Unsubscribe a client to changes in this entry
-        Parameters
-        ----------
-        websocket : websocket
-            The client that made the request
+
+    def remove_subscription(self, websocket):
+        """Remove subscriver from entry
+
+        Args:
+            websocket (Websocket): subscriber to remove
         """
-        if self in players_subscriptions[websocket]:
-            players_subscriptions[websocket].remove(self)
         self.subscribers.remove(websocket)
 
-def create_entry(path,value,entry_type=DatabaseEntry):
-    """Create a database entry of the given type
-    Parameters
-    ----------
-    path : string
-        path to this entry in the database
-        the required tree structure will be created if it doesn't exist.
-    value : anything
-        initial value of this entry
-    entry_type : type
-        type of the entry (example : DatabaseEntry)
-    """
-    database[path] = entry_type(value,path)
 
-def get_entry(path):
-    """Look for the entry of a given path
-    Parameters
-    ----------
-    path : string
-        path to this entry in the database
-    Returns
-    -------
-    DatabaseEntry : The entry that was found
-    """
-    if path != "" and path in database:
-        return database[path]
+class HueSync():
+    def __init__(self, host, port):
+        self._host = host
+        self._port = port
+        self._data = {}
+        self._players_subscriptions = {}
 
-def build_request(rtype, path, payload):
-    """Build a huesync request
-    Parameters
-    ----------
-    rtype : string
-        The type of the request (GET, SET, SUB)
-    path : string
-        The path that the request refers to
-    payload : anything
-        The payload associated to the request
-    Returns
-    -------
-    string, the built request
-    """
-    request_obj = {"type":rtype, "path":path, "payload":payload}
-    return json.dumps(request_obj)
+    def create_entry(self, path, value, entry_type=DatabaseEntry):
+        """Create new database entry
 
-def parse_request(request):
-    """Parse a huesync request into a python object
-    Parameters
-    ----------
-    request : string
-        The request in text format
-    Returns
-    -------
-    (string, string, anything) : type, path and payload of the request
-    """
-    request_obj = json.loads(request)
-    return (request_obj['type'], request_obj['path'], request_obj['payload'])
+        Args:
+            path (str): key of the value
+            value (any): value of the entry
+            entry_type (class): class to use to contain the value
+        """
+        self._data[path] = entry_type(value,path)
 
-def register(websocket):
-    """Register a client into the backend
-    Parameters
-    ----------
-    websocket : websocket
-        The client that connected
-    """
-    players_subscriptions[websocket] = set()
+    def get_entry(self, path=""):
+        """Retrieve value from database
 
-def unregister(websocket):
-    """Unregister a client from the backend
-    Parameters
-    ----------
-    websocket : websocket
-        The client that disconnected
-    """
-    for subscription in players_subscriptions[websocket].copy():
-        subscription.unsubscribe(websocket)
-    del players_subscriptions[websocket]
+        Args:
+            path (str): key of the value
 
-async def handle_request(websocket, message):
-    """Handle a client request assuming it is a huesync request
-    Parameters
-    ----------
-    websocket : websocket
-        The client that sent thed message
-    message : string
-        The message that the client sent. Must be a huesync request
-    """
-    rtype, path, payload = parse_request(message)
-    if rtype == "GET":
-        await get_entry(path=path).handle_get(websocket)
-    if rtype == "SUB":
-        get_entry(path=path).subscribe(websocket)
-        await get_entry(path=path).handle_get(websocket)
-    if rtype == "SET":
-        await get_entry(path=path).handle_set(payload)
+        Returns:
+            (any): value found
+        """
+        if path != "" and path in self._data:
+            return self._data[path]
 
-async def server(websocket, path):
-    register(websocket)
-    try:
-        async for message in websocket:
-            await handle_request(websocket, message)
-    finally:
-        unregister(websocket)
+    def _register(self, websocket):
+        self._players_subscriptions[websocket] = set()
 
-def run_server(host, port):
-    """Run the huesync server. It will be started in an asyncio
-    loop running in a separate thread.
-    Parameters
-    ----------
-    host : string
-        The host for the server (ip, etc)
-    port : int
-        The port for the server
-    """
-    start_server = websockets.serve(server, host, port)
-    asyncio.get_event_loop().run_until_complete(start_server)
-    asthread = threading.Thread(target=asyncio.get_event_loop().run_forever)
-    asthread.start()
+    def _unregister(self, websocket):
+        for subscription in self._players_subscriptions[websocket].copy():
+            subscription.remove_subscription(websocket)
+        del self._players_subscriptions[websocket]
 
-def run_coro(coroutine):
-    """Run a coroutine in the asyncio loop of the server.
-    Use this to make huesync operations from outside the asyncio loop.
-    Parameters
-    ----------
-    coroutine : asyncio coroutine
-        coroutine to be run on the loop
-    """
-    asyncio.run_coroutine_threadsafe(coroutine,asyncio.get_event_loop())
+    def subscribe_client(self, client, entry):
+        """Subscribe client to a given entry
+
+        Args:
+            client (Websocket): the client
+            entry (DatabaseEntry): the entry
+        """
+        self._players_subscriptions[client].add(entry)
+        entry.add_subscription(client)
+
+    def unsubscribe_client(self, client, entry):
+        """Unsubscribe client from a given entry
+
+        Args:
+            client (Websocket): the client
+            entry (DatabaseEntry): the entry
+        """
+        if entry in self._players_subscriptions[client]:
+            self._players_subscriptions[client].remove(entry)
+        entry.remove_subscription(client)
+
+    async def _handle_request(self, websocket, message):
+        rtype, path, payload = parse_request(message)
+        if rtype == "GET":
+            await self.get_entry(path=path).handle_get(websocket)
+        if rtype == "SUB":
+            self.subscribe_client(websocket, self.get_entry(path=path))
+            await self.get_entry(path=path).handle_get(websocket)
+        if rtype == "SET":
+            await self.get_entry(path=path).handle_set(payload)
+
+    async def _server_work(self, websocket, path):
+        self._register(websocket)
+        try:
+            async for message in websocket:
+                await self._handle_request(websocket, message)
+        finally:
+            self._unregister(websocket)
+    
+    def run_coro(self, coroutine):
+        """Run a coroutine in the asyncio loop of the server.
+        Use this to make huesync operations from outside the asyncio loop.
+        Args:
+            client (_FutureT[_T]): coroutine to be executed
+        """
+        asyncio.run_coroutine_threadsafe(coroutine,asyncio.get_event_loop())
+
+    def run_server(self):
+        """Start the server in a new thread
+        """
+        def run():
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
+            start_server = websockets.serve(self._server_work, self._host, self._port)
+            loop.run_until_complete(start_server)
+
+            loop.run_forever()
+
+        threading.Thread(target=run).start()
