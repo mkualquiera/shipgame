@@ -3,18 +3,8 @@ import huesync
 import camera
 import random
 import scene
-
-huesync.create_entry("ship/desired_heading", 90, huesync.DatabaseEntry)
-huesync.run_server("127.0.0.1",5678)
-
-pyglet.resource.path = ['res']
-window = pyglet.window.Window()
-
-pyglet.image.Texture.default_min_filter = pyglet.gl.GL_NEAREST
-pyglet.image.Texture.default_mag_filter = pyglet.gl.GL_NEAREST
-
-
-stars_s = set()
+import engine
+import webserver
 
 class Starfield(pyglet.graphics.Batch):
     def __init__(self,n,xa,xb,ya,yb):
@@ -23,7 +13,7 @@ class Starfield(pyglet.graphics.Batch):
         star_img = pyglet.resource.image("star.png")
         star_img.anchor_x = star_img.width // 2
         star_img.anchor_y = star_img.height // 2
-        for i in range(n):
+        for _ in range(n):
             self.stars_s.add(pyglet.sprite.Sprite(star_img, batch=self, 
                 x=random.randint(xa, xb),
                 y=random.randint(ya, yb)))
@@ -39,7 +29,7 @@ class Ship(pyglet.sprite.Sprite):
         super().__init__(ship_img, x=x, y=y)
     
     def update(self,dt):
-        desheading = int(huesync.get_entry("ship/desired_heading")
+        desheading = int(sync_env.get_entry("ship/desired_heading")
             .get_value()) - 90
         self.rotation += (desheading - self.rotation)/10
 
@@ -57,21 +47,15 @@ class GameScene(scene.Scene):
     def draw(self):
         self.window.clear()
         ship = self.objects['ship']
-        camera.set_cam(window,ship.x,ship.y,1,1,ship.rotation)
+        camera.set_cam(self.window,ship.x,ship.y,1,1,ship.rotation)
         super().draw()
         camera.unset_cam()
 
-currscene = GameScene(window)
+sync_env = huesync.HueSync("192.168.1.58", 60606)
+sync_env.create_entry("ship/desired_heading", 90, huesync.DatabaseEntry)
+sync_env.run_server()
 
-@window.event
-def on_draw():
-    currscene.draw()
-    
+webserver.run_in_thread(port=62626)
 
-def on_update(dt):
-    currscene.update(dt)
-    
-
-pyglet.clock.schedule(on_update)
-
-pyglet.app.run()
+engine.current_scene = GameScene(engine.window)
+engine.run()

@@ -2,15 +2,34 @@
 <html>
     <head>
         <title>WebSocket demo</title>
+        <link rel='stylesheet' href='terminal.css' type='text/css'/>
+        <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet"> 
+
     </head>
     <body>
         <input type="range" min="0" max="360", value="90" class="slider" 
             oninput="" id="heading_s">
+            <br>
+            <br>
         <div id="heading">
             90
         </div>
+        <br>
+        <button>Fire missiles!</button> 
+        <br>
+        <br>
+        <input class="textin" type="text" id="testtext" name="testtext" value="hue">  
+        
+        <br>
+        <br>
+        Cake == Lie? <br><br>
+        <label class="switch">
+            <input type="checkbox">
+            <span class="toggle"></span>
+          </label>
         <script>
-            var ws = new WebSocket("ws://127.0.0.1:5678/"),
+            var hostname = document.location.hostname
+            var ws = new WebSocket("ws://" + hostname + ":60606/"),
                 heading = document.getElementById('heading');
             var slider = document.getElementById('heading_s')
             slider.oninput = function() {
@@ -24,6 +43,7 @@
                 var req_obj = JSON.parse(event.data);
                 if (req_obj.type == "SET") {
                     console.debug(req_obj.payload)
+                    slider.value = req_obj.payload;
                     heading.innerText = req_obj.payload;
                 }
             };
