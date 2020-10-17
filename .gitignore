@@ -7,7 +7,8 @@ __pycache__/
 *.so
 
 # Pure javascript
-*.js*
+*.js.*
+*.js
 
 # Distribution / packaging
 .Python
