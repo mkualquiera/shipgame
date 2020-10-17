@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+
+#Typescript
+
+webts/dist
+webts/node_modules
