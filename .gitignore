@@ -6,9 +6,6 @@ __pycache__/
 # C extensions
 *.so
 
-# Pure javascript
-*.js.*
-*.js
 
 # Distribution / packaging
 .Python
