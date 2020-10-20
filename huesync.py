@@ -152,6 +152,7 @@ class HueSync():
 
     async def _handle_request(self, websocket, message):
         rtype, path, payload = parse_request(message)
+        print("HUESYNC", rtype, path, payload)
         if rtype == "GET":
             await self.get_entry(path=path).handle_get(websocket)
         if rtype == "SUB":

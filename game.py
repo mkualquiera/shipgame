@@ -81,7 +81,9 @@ class Ship(PhysicsSprite):
     
     def update(self,dt):
         fx, fy = self.forward()
-        self.apply_force(fx*10000, fy*10000)
+        throttle = int(sync_env.get_entry("ship/throttle")
+            .get_value())
+        self.apply_force(fx*100*throttle, fy*100*throttle)
         desheading = int(sync_env.get_entry("ship/desired_heading")
             .get_value())
         self.rotation += (desheading - self.rotation)/10
@@ -111,6 +113,7 @@ class GameScene(scene.Scene):
 
 sync_env = huesync.HueSync("0.0.0.0", 60606)
 sync_env.create_entry("ship/desired_heading", 90, huesync.DatabaseEntry)
+sync_env.create_entry("ship/throttle", 0, huesync.DatabaseEntry)
 sync_env.run_server()
 
 webserver.run_in_thread(port=62626)

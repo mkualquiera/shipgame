@@ -6,6 +6,16 @@ html {
     margin: 20pt;
 }
 
+.rackname {
+  font-size: 16pt;
+  text-align: right;
+}
+
+.rackbound {
+  border: 2pt solid #a6e22e;
+  padding: 16pt;
+}
+
 .textin {
     max-width: 95.6%;
     height: 60pt;
