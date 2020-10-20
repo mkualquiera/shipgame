@@ -19,7 +19,8 @@ html {
 }
 
 button,.button {
-    height: 60pt;
+    min-height: 60pt;
+    height: fit-content;
     font-family: 'Press Start 2P';
     font-size: 32pt;
     background: #000000;

@@ -27,30 +27,7 @@
             <input type="checkbox">
             <span class="toggle"></span>
           </label>
-        <script>
-            var hostname = document.location.hostname
-            var ws = new WebSocket("ws://" + hostname + ":60606/"),
-                heading = document.getElementById('heading');
-            var slider = document.getElementById('heading_s')
-            slider.oninput = function() {
-                set_heading(slider.value)
-            }
-            ws.onopen = function (event) {
-                ws.send(JSON.stringify({type:"SUB",path:"ship/desired_heading",
-                    payload:""}));
-            }
-            ws.onmessage = function (event) {
-                var req_obj = JSON.parse(event.data);
-                if (req_obj.type == "SET") {
-                    console.debug(req_obj.payload)
-                    slider.value = req_obj.payload;
-                    heading.innerText = req_obj.payload;
-                }
-            };
-            set_heading = function (heading) {
-                ws.send(JSON.stringify({type:"SET",path:"ship/desired_heading",
-                payload:heading}));
-            }
-        </script>
+        <script type="application/javascript" src="huesync.js"></script>
+        <script type="application/javascript" src="test.js"></script>
     </body>
 </html>

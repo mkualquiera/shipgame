@@ -109,7 +109,7 @@ class GameScene(scene.Scene):
         super().draw()
         camera.unset_cam()
 
-sync_env = huesync.HueSync("192.168.1.58", 60606)
+sync_env = huesync.HueSync("192.168.1.60", 60606)
 sync_env.create_entry("ship/desired_heading", 90, huesync.DatabaseEntry)
 sync_env.run_server()
 
