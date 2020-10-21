@@ -149,3 +149,87 @@ var DialElement = (function () {
     }
     return DialElement;
 }());
+
+var KinematicsElement = (function () {
+    function KinematicsElement(container, manager, name) {
+        RackElement.call(this, container, manager, name);
+        var self = this;
+        container.innerHTML = '<div></div><canvas class="kinscreen"></canvas>';
+        this.text = container.children[0];
+        this.screen = container.children[1];
+        this.context = this.screen.getContext("2d");
+        this.drawLine = function(ax,ay,bx,by) {
+            this.context.moveTo(ax,ay);
+            this.context.lineTo(bx,by);
+            this.context.stroke();
+        }
+        this.redrawCanvas = function () {
+            this.screen.width = this.screen.clientWidth;
+            this.screen.height = this.screen.clientWidth;
+            this.context.clearRect(0,0,this.screen.clientWidth,
+                this.screen.clientHeight)
+
+            this.context.beginPath();
+            this.context.strokeStyle = "#a6e22e";
+            this.context.lineWidth = 2.3;
+            var endpoint_x = this.screen.width/2 + 
+                Math.cos(Math.PI * this.value["pos_angle"] / 180) *
+                this.screen.width/2 * 0.9;
+            var endpoint_y = this.screen.height/2 + 
+                Math.sin(Math.PI * this.value["pos_angle"] / 180) *
+                this.screen.height/2 * 0.9;
+            this.drawLine(this.screen.width/2, this.screen.height/2,
+                endpoint_x, endpoint_y);
+
+            this.context.beginPath();
+            this.context.strokeStyle = "#e22ed1";
+            this.context.lineWidth = 2.3 * 2;
+            var startAngle = Math.PI * this.value["pos_angle"] / 180;
+            var endAngle = startAngle + (Math.PI * this.value["vel_angle"] / 
+                180) * 10;
+            this.context.arc(this.screen.width/2, this.screen.height/2,
+                this.screen.height/2 * 0.9, startAngle, endAngle, endAngle < 
+                startAngle);
+            this.context.stroke();
+
+            this.context.beginPath();
+            this.context.strokeStyle = "#2e7ae2";
+            this.context.lineWidth = 2.3 * 4;
+            var startAngle = Math.PI * this.value["pos_angle"] / 180;
+            var endAngle = startAngle + (Math.PI * this.value["acc_angle"] / 
+                180) * 30;
+            this.context.arc(this.screen.width/2, this.screen.height/2,
+                this.screen.height/2 * 0.8, startAngle, endAngle, endAngle <
+                startAngle);
+            this.context.stroke();
+
+            this.context.beginPath();
+            this.context.strokeStyle = "#e22ed1";
+            this.context.lineWidth = 2.3 * 2;
+            var endpoint_vx = this.screen.width/2 + 
+                (this.value["vel_x"]/this.screen.width) * 10 *
+                this.screen.width/2 * 0.9;
+            var endpoint_vy = this.screen.height/2 + 
+            (-this.value["vel_y"]/this.screen.height) * 10 *
+                this.screen.height/2 * 0.9;
+            this.drawLine(this.screen.width/2, this.screen.height/2,
+                endpoint_vx, endpoint_vy);
+
+            this.context.beginPath();
+            this.context.strokeStyle = "#2e7ae2";
+            this.context.lineWidth = 2.3 * 4;
+            var endpoint_vx = this.screen.width/2 + 
+                (this.value["acc_x"]/this.screen.width) * 30 *
+                this.screen.width/2 * 0.9;
+            var endpoint_vy = this.screen.height/2 + 
+            (-this.value["acc_y"]/this.screen.height) * 30 *
+                this.screen.height/2 * 0.9;
+            this.drawLine(this.screen.width/2, this.screen.height/2,
+                endpoint_vx, endpoint_vy);
+        }
+        this.onreceiveupdate = function () {
+            this.redrawCanvas();
+        };
+    }
+    return KinematicsElement;
+}());

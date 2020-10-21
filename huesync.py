@@ -96,6 +96,7 @@ class HueSync():
     def __init__(self, host, port):
         self._host = host
         self._port = port
+        self.loop = None
         self._data = {}
         self._players_subscriptions = {}
 
@@ -175,13 +176,14 @@ class HueSync():
         Args:
             client (_FutureT[_T]): coroutine to be executed
         """
-        asyncio.run_coroutine_threadsafe(coroutine,asyncio.get_event_loop())
+        asyncio.run_coroutine_threadsafe(coroutine,self.loop)
 
     def run_server(self):
         """Start the server in a new thread
         """
         def run():
             loop = asyncio.new_event_loop()
+            self.loop = loop
             asyncio.set_event_loop(loop)
 
             start_server = websockets.serve(self._server_work, self._host, self._port)

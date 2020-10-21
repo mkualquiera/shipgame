@@ -13,6 +13,13 @@ html {
   height: 120pt;
 }
 
+.kinscreen {
+  background-color: #000000;
+  border: 2pt solid #a6e22e;
+  border-radius: 50%;
+  width: 100%;
+}
+
 .rackbound {
   /*border: 2pt solid #a6e22e;*/
   background-color: #111111;
@@ -144,4 +151,8 @@ button,.button {
   
   .toggle.round:before {
     border-radius: 50%;
+  }
+
+  .kindisplay {
+    font-size: 14pt;
   }

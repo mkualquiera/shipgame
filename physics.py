@@ -8,9 +8,12 @@ class PhysicsSprite(pyglet.sprite.Sprite):
         self.vx = 0
         self.vy = 0
         self.ax = 0
+        self.last_ax = 0
         self.ay = 0
+        self.last_ay = 0
         self.va = 0
         self.aa = 0
+        self.last_aa = 0
         self.longitude = longitude
         self.debug_batch = pyglet.graphics.Batch()
         self.vel_line = pyglet.shapes.Line(self.x,self.y,
@@ -21,6 +24,9 @@ class PhysicsSprite(pyglet.sprite.Sprite):
             batch = self.debug_batch)
 
     def update(self,dt):
+        self.last_ax = self.ax
+        self.last_ay = self.ay
+        self.last_aa = self.aa
         self.vel_line.x = self.x
         self.vel_line.y = self.y
         self.vel_line.x2 = self.x + self.vx
@@ -50,12 +56,12 @@ class PhysicsSprite(pyglet.sprite.Sprite):
         self.aa += value / ((self.mass*self.longitude)/12)
 
     def forward(self):
-        return (math.cos(math.pi * (180-self.rotation) / 180), 
-                math.sin(math.pi * (180-self.rotation) / 180))
+        return (math.cos(math.pi * (-self.rotation) / 180), 
+                math.sin(math.pi * (-self.rotation) / 180))
     
     def right(self):
-        return (math.cos(math.pi * (90-self.rotation) / 180), 
-                math.sin(math.pi * (90-self.rotation) / 180))
+        return (math.cos(math.pi * (-self.rotation - 90) / 180), 
+                math.sin(math.pi * (-self.rotation - 90) / 180))
 
 class ControllableSprite(PhysicsSprite):
     def __init__(self,image,x,y,mass,longitude,forward_thrust=0,
