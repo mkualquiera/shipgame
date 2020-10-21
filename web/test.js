@@ -6,9 +6,17 @@ huesync.ws.onopen = function () {
     var rackmanager = new RackManager(rackelem,
         huesync,
         "ship");
-    var sheading = rackmanager.addElement(DialElement, "desired_heading");
-    sheading.max = 360;
-    sheading.sensitivity = 240;
-    var sthrottle = rackmanager.addElement(SliderElement, "throttle");
+    var fthrottle = rackmanager.addElement(SliderElement, 
+        "forward_throttle");
+    fthrottle.slider.min = -100;
+    fthrottle.slider.max = 100;
+    var rthrottle = rackmanager.addElement(SliderElement, 
+        "right_throttle");
+    rthrottle.slider.min = -100;
+    rthrottle.slider.max = 100;
+    var athrottle = rackmanager.addElement(SliderElement, 
+        "angular_throttle");
+    athrottle.slider.min = -100;
+    athrottle.slider.max = 100;
 }
 
