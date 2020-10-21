@@ -6,14 +6,23 @@ html {
     margin: 20pt;
 }
 
-.rackname {
-  font-size: 16pt;
-  text-align: right;
+.dial {
+  background-color: #000000;
+  border: 2pt solid #a6e22e;
+  width: 100%;
+  height: 120pt;
 }
 
 .rackbound {
-  border: 2pt solid #a6e22e;
+  /*border: 2pt solid #a6e22e;*/
+  background-color: #111111;
   padding: 16pt;
+}
+
+.rackname {
+  background-color: #202020;
+  font-size: 16pt;
+  text-align: right;
 }
 
 .textin {

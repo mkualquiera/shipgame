@@ -71,6 +71,11 @@ class Starfield(pyglet.graphics.Batch):
     def update(self,dt):
         pass
 
+
+def angle_diff(a,b):
+    diff = (a-b+180) % 360 - 180;
+    return diff + 360 if diff < -180 else diff
+
 class Ship(PhysicsSprite):
     def __init__(self,x,y):
         ship_img = pyglet.resource.image("ship.png")
@@ -81,12 +86,12 @@ class Ship(PhysicsSprite):
     
     def update(self,dt):
         fx, fy = self.forward()
-        throttle = int(sync_env.get_entry("ship/throttle")
+        throttle = float(sync_env.get_entry("ship/throttle")
             .get_value())
         self.apply_force(fx*100*throttle, fy*100*throttle)
-        desheading = int(sync_env.get_entry("ship/desired_heading")
+        desheading = float(sync_env.get_entry("ship/desired_heading")
             .get_value())
-        self.rotation += (desheading - self.rotation)/10
+        self.rotation += angle_diff(desheading, self.rotation)/10
         super().update(dt)
 
     def draw(self):
