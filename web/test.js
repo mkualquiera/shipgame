@@ -1,5 +1,6 @@
 
 var hostname = document.location.hostname;
+hostname = hostname || "localhost"
 var huesync = new HueSync("ws://" + hostname + ":60606/");
 huesync.ws.onopen = function () {
     var rackelem = document.getElementById("rack");
